@@ -1,0 +1,24 @@
+ #Define the function
+def function(x):
+    return (x + 3) ** 2
+
+# Define the derivative of the function
+def derivative(x):
+    return 2 * (x + 3)
+
+# Initialize values
+x = 2
+learning_rate = 0.1
+iterations = 100
+
+print("Initial value of x:", x)
+
+# Apply Gradient Descent
+for i in range(iterations):
+    gradient = derivative(x)
+    x = x - learning_rate * gradient
+
+# Display the result
+print("\nAfter Gradient Descent:")
+print("Local Minimum point (x):", round(x, 6))
+print("Minimum value (y):", round(function(x), 6))

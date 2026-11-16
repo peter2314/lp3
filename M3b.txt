@@ -1,0 +1,43 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, confusion_matrix
+from tensorflow import keras
+from tensorflow.keras import layers
+
+# 1. Read the dataset
+df = pd.read_csv("Churn_Modelling.csv")
+
+# 2. Features and target (drop ID columns, one-hot encode text columns)
+x = df.drop(["RowNumber", "CustomerId", "Surname", "Exited"], axis=1)
+x = pd.get_dummies(x, columns=["Geography", "Gender"], drop_first=True)
+y = df["Exited"]
+
+x_train, x_test, y_train, y_test = train_test_split(
+    x, y, test_size=0.2, random_state=42, stratify=y)
+
+# 3. Normalize
+scaler = StandardScaler()
+x_train = scaler.fit_transform(x_train)
+x_test = scaler.transform(x_test)
+
+# 4. Build the model
+model = keras.Sequential([
+    layers.Input(shape=(x_train.shape[1],)),
+    layers.Dense(16, activation="relu"),
+    layers.Dropout(0.2),                      # improvement: reduces overfitting
+    layers.Dense(8, activation="relu"),
+    layers.Dense(1, activation="sigmoid"),
+])
+model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+
+# improvement: stop early when validation loss stops improving
+early_stop = keras.callbacks.EarlyStopping(monitor="val_loss", patience=10, restore_best_weights=True)
+
+model.fit(x_train, y_train, epochs=100, batch_size=32,
+          validation_split=0.2, callbacks=[early_stop], verbose=0)
+
+# 5. Accuracy and confusion matrix
+pred = (model.predict(x_test, verbose=0) > 0.5).astype(int)
+print("Accuracy:", accuracy_score(y_test, pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, pred))
